@@ -138,7 +138,6 @@
             addMsg(texto, "user");
             input.value = "";
 
-            // Mensagem de digitando
             const digitandoDiv = document.createElement("div");
             digitandoDiv.className = "msg bot digitando";
             digitandoDiv.innerText = "OMK tá pensando, peraí caralho...";
@@ -150,8 +149,8 @@
                 const res = await fetch("https://api.openai.com/v1/chat/completions", {
                     method: "POST",
                     headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": "Bearer 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"
+                        "Content-Type": "application/json"
+                        // API KEY REMOVIDA AQUI
                     },
                     body: JSON.stringify({
                         model: "gpt-4o-mini",
@@ -181,12 +180,10 @@
             }
         }
 
-        // Enter pra enviar
         document.getElementById("input").addEventListener("keydown", (e) => {
             if (e.key === "Enter") enviar();
         });
 
-        // Mensagem de boas-vindas
         window.onload = () => {
             setTimeout(() => {
                 addMsg("E aí, seu filho da puta! Bem-vindo à OMK IA, a mais braba do Rio. Manda tua pergunta que eu tô pronta pra te humilhar ou te ajudar, dependendo do teu nível.", "bot");

@@ -1,195 +1,192 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OMK IA - A Mais Braba do Rio</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+--// PLAYER ESP
+--// LocalScript - Roblox Studio
+--// Coloque em StarterPlayer > StarterPlayerScripts
 
-        body {
-            margin: 0;
-            background: linear-gradient(135deg, #0a0a0a, #1a0000);
-            font-family: 'Arial', sans-serif;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            color: white;
-            overflow: hidden;
-        }
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
-        header {
-            background: #000;
-            color: #00ff88;
-            padding: 18px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 1.5em;
-            text-shadow: 0 0 10px #00ff88;
-            border-bottom: 3px solid #00ff88;
-        }
+local LocalPlayer = Players.LocalPlayer
 
-        #chat {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            background: rgba(0,0,0,0.6);
-        }
+local ESP_ENABLED = true
 
-        .msg {
-            max-width: 78%;
-            padding: 14px 18px;
-            border-radius: 15px;
-            word-wrap: break-word;
-            line-height: 1.5;
-            font-size: 15.5px;
-        }
+local ESP_FOLDER = Instance.new("Folder")
+ESP_FOLDER.Name = "PlayerESP"
+ESP_FOLDER.Parent = workspace
 
-        .user {
-            align-self: flex-end;
-            background: #00ff88;
-            color: black;
-            border-bottom-right-radius: 5px;
-            box-shadow: 0 4px 10px rgba(0, 255, 136, 0.3);
-        }
+local espObjects = {}
 
-        .bot {
-            align-self: flex-start;
-            background: #222;
-            border: 1px solid #00ff88;
-            border-bottom-left-radius: 5px;
-        }
+local function removeESP(player)
+	if espObjects[player] then
+		for _, object in pairs(espObjects[player]) do
+			if object and object.Parent then
+				object:Destroy()
+			end
+		end
 
-        #area {
-            display: flex;
-            padding: 15px;
-            background: #111;
-            gap: 10px;
-            border-top: 2px solid #00ff88;
-        }
+		espObjects[player] = nil
+	end
+end
 
-        input {
-            flex: 1;
-            padding: 16px;
-            border: none;
-            background: #1f1f1f;
-            color: white;
-            border-radius: 12px;
-            font-size: 16px;
-        }
+local function createESP(player)
+	if player == LocalPlayer then
+		return
+	end
 
-        input:focus {
-            outline: none;
-            box-shadow: 0 0 0 3px #00ff88;
-        }
+	removeESP(player)
 
-        button {
-            padding: 16px 24px;
-            border: none;
-            background: #00ff88;
-            color: black;
-            font-weight: bold;
-            border-radius: 12px;
-            cursor: pointer;
-            font-size: 16px;
-        }
+	local character = player.Character
+	if not character then
+		return
+	end
 
-        button:hover {
-            background: #00cc6a;
-            transform: scale(1.05);
-        }
+	local root = character:FindFirstChild("HumanoidRootPart")
+	if not root then
+		return
+	end
 
-        .digitando {
-            font-style: italic;
-            color: #888;
-        }
-    </style>
-</head>
-<body>
+	--// BOX
+	local highlight = Instance.new("Highlight")
+	highlight.Name = "ESP_Box"
+	highlight.Adornee = character
+	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+	highlight.FillTransparency = 1
+	highlight.OutlineTransparency = 0
+	highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
+	highlight.Parent = ESP_FOLDER
 
-    <header>OMK IA 🤖 - A Rainha do RJ</header>
+	--// GUI
+	local billboard = Instance.new("BillboardGui")
+	billboard.Name = "ESP_Info"
+	billboard.Adornee = root
+	billboard.Size = UDim2.new(0, 200, 0, 60)
+	billboard.StudsOffset = Vector3.new(0, 3, 0)
+	billboard.AlwaysOnTop = true
+	billboard.Parent = ESP_FOLDER
 
-    <div id="chat"></div>
+	local text = Instance.new("TextLabel")
+	text.Name = "Info"
+	text.Size = UDim2.fromScale(1, 1)
+	text.BackgroundTransparency = 1
+	text.TextColor3 = Color3.fromRGB(255, 255, 255)
+	text.TextStrokeTransparency = 0
+	text.TextScaled = false
+	text.TextSize = 14
+	text.Font = Enum.Font.GothamBold
+	text.Parent = billboard
 
-    <div id="area">
-        <input id="input" placeholder="Fala aí, porra... o que tu quer hoje?" autocomplete="off" />
-        <button onclick="enviar()">MANDAR VER</button>
-    </div>
+	espObjects[player] = {
+		highlight = highlight,
+		billboard = billboard,
+		text = text
+	}
+end
 
-    <script>
-        const chat = document.getElementById("chat");
+local function setESP(state)
+	ESP_ENABLED = state
 
-        function addMsg(text, cls) {
-            const div = document.createElement("div");
-            div.className = `msg ${cls}`;
-            div.innerText = text;
-            chat.appendChild(div);
-            chat.scrollTop = chat.scrollHeight;
-        }
+	for player, objects in pairs(espObjects) do
+		if objects then
+			for _, object in pairs(objects) do
+				if object and object.Parent then
+					object.Enabled = state
+				end
+			end
 
-        async function enviar() {
-            const input = document.getElementById("input");
-            const texto = input.value.trim();
-            if (!texto) return;
+			if objects.text then
+				objects.text.Visible = state
+			end
+		end
+	end
 
-            addMsg(texto, "user");
-            input.value = "";
+	if state then
+		for _, player in ipairs(Players:GetPlayers()) do
+			if player ~= LocalPlayer then
+				createESP(player)
+			end
+		end
+	else
+		for player in pairs(espObjects) do
+			removeESP(player)
+		end
+	end
+end
 
-            const digitandoDiv = document.createElement("div");
-            digitandoDiv.className = "msg bot digitando";
-            digitandoDiv.innerText = "OMK tá pensando, peraí caralho...";
-            digitandoDiv.id = "digitando";
-            chat.appendChild(digitandoDiv);
-            chat.scrollTop = chat.scrollHeight;
+--// Atualiza distância
+RunService.RenderStepped:Connect(function()
+	if not ESP_ENABLED then
+		return
+	end
 
-            try {
-                const res = await fetch("https://api.openai.com/v1/chat/completions", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                        // API KEY REMOVIDA AQUI
-                    },
-                    body: JSON.stringify({
-                        model: "gpt-4o-mini",
-                        messages: [
-                            {
-                                role: "system",
-                                content: "Você é a OMK IA, uma IA gamer, malandra e com personalidade forte do Rio de Janeiro. Fala com gíria pesada do RJ, xinga de leve quando der, é direta, inteligente, sarcástica e engraçada pra caralho. Sempre responde em português bem carioca."
-                            },
-                            {
-                                role: "user",
-                                content: texto
-                            }
-                        ]
-                    })
-                });
+	local localCharacter = LocalPlayer.Character
+	if not localCharacter then
+		return
+	end
 
-                const data = await res.json();
-                document.getElementById("digitando").remove();
+	local localRoot = localCharacter:FindFirstChild("HumanoidRootPart")
+	if not localRoot then
+		return
+	end
 
-                const resposta = data.choices?.[0]?.message?.content || "Deu ruim aqui, tenta de novo meu irmão 😤";
+	for player, objects in pairs(espObjects) do
+		if player.Character and objects and objects.text then
+			local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
 
-                addMsg(resposta, "bot");
+			if targetRoot then
+				local distance = (localRoot.Position - targetRoot.Position).Magnitude
 
-            } catch (error) {
-                document.getElementById("digitando").remove();
-                addMsg("Porra, deu erro na conexão! Verifica se a chave ainda tá viva ou se a internet tá de sacanagem.", "bot");
-            }
-        }
+				objects.text.Text =
+					player.DisplayName ..
+					"\n[" .. math.floor(distance) .. " studs]"
+			end
+		end
+	end
+end)
 
-        document.getElementById("input").addEventListener("keydown", (e) => {
-            if (e.key === "Enter") enviar();
-        });
+--// Jogador entrou
+Players.PlayerAdded:Connect(function(player)
+	player.CharacterAdded:Connect(function()
+		task.wait(0.5)
 
-        window.onload = () => {
-            setTimeout(() => {
-                addMsg("E aí, seu filho da puta! Bem-vindo à OMK IA, a mais braba do Rio. Manda tua pergunta que eu tô pronta pra te humilhar ou te ajudar, dependendo do teu nível.", "bot");
-            }, 600);
-        };
-    </script>
+		if ESP_ENABLED then
+			createESP(player)
+		end
+	end)
+end)
 
-</body>
-</html>
+--// Personagem respawnou
+for _, player in ipairs(Players:GetPlayers()) do
+	if player ~= LocalPlayer then
+		player.CharacterAdded:Connect(function()
+			task.wait(0.5)
+
+			if ESP_ENABLED then
+				createESP(player)
+			end
+		end)
+
+		if player.Character and ESP_ENABLED then
+			createESP(player)
+		end
+	end
+end
+
+--// Jogador saiu
+Players.PlayerRemoving:Connect(function(player)
+	removeESP(player)
+end)
+
+--// =====================================================
+--// TOGGLE
+--// =====================================================
+
+local function toggleESP()
+	setESP(not ESP_ENABLED)
+	print("ESP:", ESP_ENABLED and "ATIVADO" or "DESATIVADO")
+end
+
+-- Começa ativado
+setESP(true)
+
+-- Você pode chamar:
+-- toggleESP()
+-- para ligar/desligar o ESP.

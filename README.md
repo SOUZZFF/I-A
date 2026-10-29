@@ -1,192 +1,129 @@
---// PLAYER ESP
---// LocalScript - Roblox Studio
---// Coloque em StarterPlayer > StarterPlayerScripts
+--[[
+    Drive X | Script Completo
+    Features:
+    - Anti AFK
+    - Auto Drive
+    - Auto Bridge Trail Race
+    - Fly Vehicle (toggle)
+    
+    Feito pra executor (Synapse, Fluxus, Solara, etc)
+]]
 
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
-local LocalPlayer = Players.LocalPlayer
-
-local ESP_ENABLED = true
-
-local ESP_FOLDER = Instance.new("Folder")
-ESP_FOLDER.Name = "PlayerESP"
-ESP_FOLDER.Parent = workspace
-
-local espObjects = {}
-
-local function removeESP(player)
-	if espObjects[player] then
-		for _, object in pairs(espObjects[player]) do
-			if object and object.Parent then
-				object:Destroy()
-			end
-		end
-
-		espObjects[player] = nil
-	end
-end
-
-local function createESP(player)
-	if player == LocalPlayer then
-		return
-	end
-
-	removeESP(player)
-
-	local character = player.Character
-	if not character then
-		return
-	end
-
-	local root = character:FindFirstChild("HumanoidRootPart")
-	if not root then
-		return
-	end
-
-	--// BOX
-	local highlight = Instance.new("Highlight")
-	highlight.Name = "ESP_Box"
-	highlight.Adornee = character
-	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	highlight.FillTransparency = 1
-	highlight.OutlineTransparency = 0
-	highlight.OutlineColor = Color3.fromRGB(255, 255, 255)
-	highlight.Parent = ESP_FOLDER
-
-	--// GUI
-	local billboard = Instance.new("BillboardGui")
-	billboard.Name = "ESP_Info"
-	billboard.Adornee = root
-	billboard.Size = UDim2.new(0, 200, 0, 60)
-	billboard.StudsOffset = Vector3.new(0, 3, 0)
-	billboard.AlwaysOnTop = true
-	billboard.Parent = ESP_FOLDER
-
-	local text = Instance.new("TextLabel")
-	text.Name = "Info"
-	text.Size = UDim2.fromScale(1, 1)
-	text.BackgroundTransparency = 1
-	text.TextColor3 = Color3.fromRGB(255, 255, 255)
-	text.TextStrokeTransparency = 0
-	text.TextScaled = false
-	text.TextSize = 14
-	text.Font = Enum.Font.GothamBold
-	text.Parent = billboard
-
-	espObjects[player] = {
-		highlight = highlight,
-		billboard = billboard,
-		text = text
-	}
-end
-
-local function setESP(state)
-	ESP_ENABLED = state
-
-	for player, objects in pairs(espObjects) do
-		if objects then
-			for _, object in pairs(objects) do
-				if object and object.Parent then
-					object.Enabled = state
-				end
-			end
-
-			if objects.text then
-				objects.text.Visible = state
-			end
-		end
-	end
-
-	if state then
-		for _, player in ipairs(Players:GetPlayers()) do
-			if player ~= LocalPlayer then
-				createESP(player)
-			end
-		end
-	else
-		for player in pairs(espObjects) do
-			removeESP(player)
-		end
-	end
-end
-
---// Atualiza distância
-RunService.RenderStepped:Connect(function()
-	if not ESP_ENABLED then
-		return
-	end
-
-	local localCharacter = LocalPlayer.Character
-	if not localCharacter then
-		return
-	end
-
-	local localRoot = localCharacter:FindFirstChild("HumanoidRootPart")
-	if not localRoot then
-		return
-	end
-
-	for player, objects in pairs(espObjects) do
-		if player.Character and objects and objects.text then
-			local targetRoot = player.Character:FindFirstChild("HumanoidRootPart")
-
-			if targetRoot then
-				local distance = (localRoot.Position - targetRoot.Position).Magnitude
-
-				objects.text.Text =
-					player.DisplayName ..
-					"\n[" .. math.floor(distance) .. " studs]"
-			end
-		end
-	end
+-- ==================== ANTI AFK ====================
+warn("Anti afk running")
+game:GetService("Players").LocalPlayer.Idled:Connect(function()
+    warn("Anti afk ran")
+    game:GetService("VirtualUser"):CaptureController()
+    game:GetService("VirtualUser"):ClickButton2(Vector2.new())
 end)
 
---// Jogador entrou
-Players.PlayerAdded:Connect(function(player)
-	player.CharacterAdded:Connect(function()
-		task.wait(0.5)
+-- ==================== UI LIBRARY ====================
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Marco8642/science/main/ui%20libs2"))()
+local example = library:CreateWindow({
+    text = "Drive X"
+})
 
-		if ESP_ENABLED then
-			createESP(player)
-		end
-	end)
+-- ==================== SPEED INPUT ====================
+example:AddBox("Enter Vehicle Speed", function(object, focus)
+    if focus then
+        getfenv().speed = tonumber(object.Text)
+    end
 end)
 
---// Personagem respawnou
-for _, player in ipairs(Players:GetPlayers()) do
-	if player ~= LocalPlayer then
-		player.CharacterAdded:Connect(function()
-			task.wait(0.5)
+-- ==================== AUTO DRIVE ====================
+example:AddToggle("Auto Drive", function(state)
+    getfenv().auto = state and true or false
 
-			if ESP_ENABLED then
-				createESP(player)
-			end
-		end)
+    if getfenv().auto then
+        local plr = game.Players.LocalPlayer
+        local car = plr.ReplicationFocus
+        game.Players.LocalPlayer:RequestStreamAroundAsync(Vector3.new(-3531.84521, 36.217411, 1262.63647))
+        wait()
+        car:PivotTo(CFrame.new(-3531.84521, 36.217411, 1262.63647, -0.929316938, -7.24218182e-07, 0.36928311, 8.97509338e-08, 1, 2.18700848e-06, -0.36928311, 2.06556751e-06, -0.929316938))
+        wait(1)
+        btp = car.CFrame
+    end
 
-		if player.Character and ESP_ENABLED then
-			createESP(player)
-		end
-	end
-end
+    while getfenv().auto do
+        game:GetService("VirtualInputManager"):SendKeyEvent(getfenv().auto, "W", false, game)
+        local plr = game.Players.LocalPlayer
+        local speed = getfenv().speed or 500
+        local car = plr.ReplicationFocus
+        car:PivotTo(btp)
 
---// Jogador saiu
-Players.PlayerRemoving:Connect(function(player)
-	removeESP(player)
+        local dist = (car.Position - CFrame.new(-4049.48584, car.Position.Y, 1018.12622, -0.903568566, 3.80430015e-06, 0.428443521, 2.83321583e-06, 1, -2.90422236e-06, -0.428443521, -1.41029113e-06, -0.903568566).Position).Magnitude
+        local TweenService = game:GetService("TweenService")
+        local TweenInfoToUse = TweenInfo.new(dist / speed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, 0, false, 0)
+
+        local TweenValue = Instance.new("CFrameValue")
+        TweenValue.Value = car.CFrame
+
+        TweenValue.Changed:Connect(function()
+            car:PivotTo(TweenValue.Value)
+        end)
+
+        local OnTween = TweenService:Create(TweenValue, TweenInfoToUse, {
+            Value = CFrame.new(-4049.48584, car.Position.Y, 1018.12622, -0.903568566, 3.80430015e-06, 0.428443521, 2.83321583e-06, 1, -2.90422236e-06, -0.428443521, -1.41029113e-06, -0.903568566)
+        })
+        OnTween:Play()
+        OnTween.Completed:Wait()
+        game:GetService("VirtualInputManager"):SendKeyEvent(getfenv().auto, "W", false, game)
+    end
 end)
 
---// =====================================================
---// TOGGLE
---// =====================================================
+-- ==================== AUTO BRIDGE TRAIL RACE ====================
+example:AddToggle("Auto Bridge Trail Race", function(state)
+    getfenv().autorace = state and true or false
 
-local function toggleESP()
-	setESP(not ESP_ENABLED)
-	print("ESP:", ESP_ENABLED and "ATIVADO" or "DESATIVADO")
-end
+    local plr = game:GetService("Players").LocalPlayer
+    local CarSerivce = require(plr.PlayerScripts.TS.CarService.CarService_Client).CarSerivce
+    local CarInfo = CarSerivce.ActiveCar
+    local CarState = CarInfo.CarState.State
+    local CarConfig = CarState.Config
+    local CarGears = CarConfig.Physics.Transmission.Gears
+    local GearValue = #CarGears
+    local maxSpeed = CarGears[GearValue][1]
 
--- Começa ativado
-setESP(true)
+    while getfenv().autorace do
+        task.wait()
+        if not workspace.RaceCheckpoints:FindFirstChildOfClass("Model") then
+            local ohString1 = "Bridge_Trail"
+            local ohBoolean2 = true
+            game:GetService("ReplicatedStorage")["events-shared/Definations/Networking/RaceDefinations@GeneralEvents"].EnterRaceQueue:FireServer(ohString1, ohBoolean2)
+            task.wait(1)
+        else
+            for i, v in pairs(workspace.RaceCheckpoints:GetChildren()) do
+                if v:IsA("Model") and v:FindFirstChild("Ring") and v.Ring.Transparency < 1 then
+                    local dist = (CarInfo.Body.Position - v.WorldPivot.Position).Magnitude
+                    local TweenService = game:GetService("TweenService")
+                    local TweenInfoToUse = TweenInfo.new(dist / maxSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, 0, false, 0)
 
--- Você pode chamar:
--- toggleESP()
--- para ligar/desligar o ESP.
+                    local TweenValue = Instance.new("CFrameValue")
+                    TweenValue.Value = CarInfo.Body.CFrame
+
+                    TweenValue.Changed:Connect(function()
+                        CarInfo.Body.CFrame = TweenValue.Value
+                        CarInfo.Body.AssemblyLinearVelocity = Vector3.zero
+                    end)
+
+                    getfenv().tween = TweenService:Create(TweenValue, TweenInfoToUse, {Value = v.WorldPivot})
+                    getfenv().tween:Play()
+                    getfenv().tween.Completed:Wait()
+                end
+            end
+        end
+    end
+end)
+
+-- ==================== FLY VEHICLE ====================
+getfenv().flyVehicle = false
+
+example:AddToggle("Fly Vehicle", function(state)
+    getfenv().flyVehicle = state
+
+    if state then
+        warn("Fly Vehicle ativado")
+    else
+        warn("Fly Vehicle desativado")
+    end
+end)

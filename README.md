@@ -1,129 +1,182 @@
---[[
-    Drive X | Script Completo
-    Features:
-    - Anti AFK
-    - Auto Drive
-    - Auto Bridge Trail Race
-    - Fly Vehicle (toggle)
-    
-    Feito pra executor (Synapse, Fluxus, Solara, etc)
-]]
 
--- ==================== ANTI AFK ====================
-warn("Anti afk running")
-game:GetService("Players").LocalPlayer.Idled:Connect(function()
-    warn("Anti afk ran")
-    game:GetService("VirtualUser"):CaptureController()
-    game:GetService("VirtualUser"):ClickButton2(Vector2.new())
-end)
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PUMPKIN HUB 🎃</title>
+<style>
+* {
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
+}
 
--- ==================== UI LIBRARY ====================
-local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/Marco8642/science/main/ui%20libs2"))()
-local example = library:CreateWindow({
-    text = "Drive X"
-})
+body {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at center, #ff7518, #431000 75%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
 
--- ==================== SPEED INPUT ====================
-example:AddBox("Enter Vehicle Speed", function(object, focus)
-    if focus then
-        getfenv().speed = tonumber(object.Text)
-    end
-end)
+.hub {
+  width: 340px;
+  background: #111;
+  border: 2px solid #ff3c00;
+  border-radius: 18px;
+  box-shadow: 0 0 35px #ff4500;
+  overflow: hidden;
+  animation: appear .6s ease;
+}
 
--- ==================== AUTO DRIVE ====================
-example:AddToggle("Auto Drive", function(state)
-    getfenv().auto = state and true or false
+@keyframes appear {
+  from { opacity: 0; transform: scale(.7) translateY(30px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
 
-    if getfenv().auto then
-        local plr = game.Players.LocalPlayer
-        local car = plr.ReplicationFocus
-        game.Players.LocalPlayer:RequestStreamAroundAsync(Vector3.new(-3531.84521, 36.217411, 1262.63647))
-        wait()
-        car:PivotTo(CFrame.new(-3531.84521, 36.217411, 1262.63647, -0.929316938, -7.24218182e-07, 0.36928311, 8.97509338e-08, 1, 2.18700848e-06, -0.36928311, 2.06556751e-06, -0.929316938))
-        wait(1)
-        btp = car.CFrame
-    end
+.header {
+  padding: 20px;
+  text-align: center;
+  background: linear-gradient(120deg,#ff2400,#ff7900);
+}
 
-    while getfenv().auto do
-        game:GetService("VirtualInputManager"):SendKeyEvent(getfenv().auto, "W", false, game)
-        local plr = game.Players.LocalPlayer
-        local speed = getfenv().speed or 500
-        local car = plr.ReplicationFocus
-        car:PivotTo(btp)
+.header h1 {
+  margin: 0;
+  font-size: 25px;
+  text-shadow: 0 0 12px black;
+}
 
-        local dist = (car.Position - CFrame.new(-4049.48584, car.Position.Y, 1018.12622, -0.903568566, 3.80430015e-06, 0.428443521, 2.83321583e-06, 1, -2.90422236e-06, -0.428443521, -1.41029113e-06, -0.903568566).Position).Magnitude
-        local TweenService = game:GetService("TweenService")
-        local TweenInfoToUse = TweenInfo.new(dist / speed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, 0, false, 0)
+.header p {
+  margin: 6px 0 0;
+  font-size: 11px;
+}
 
-        local TweenValue = Instance.new("CFrameValue")
-        TweenValue.Value = car.CFrame
+.content { padding: 18px; }
 
-        TweenValue.Changed:Connect(function()
-            car:PivotTo(TweenValue.Value)
-        end)
+.section {
+  color: #ff6500;
+  font-size: 12px;
+  margin: 10px 0;
+  font-weight: bold;
+}
 
-        local OnTween = TweenService:Create(TweenValue, TweenInfoToUse, {
-            Value = CFrame.new(-4049.48584, car.Position.Y, 1018.12622, -0.903568566, 3.80430015e-06, 0.428443521, 2.83321583e-06, 1, -2.90422236e-06, -0.428443521, -1.41029113e-06, -0.903568566)
-        })
-        OnTween:Play()
-        OnTween.Completed:Wait()
-        game:GetService("VirtualInputManager"):SendKeyEvent(getfenv().auto, "W", false, game)
-    end
-end)
+.option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #202020;
+  border: 1px solid #3a2018;
+  border-radius: 10px;
+  padding: 13px;
+  margin-bottom: 10px;
+  transition: .25s;
+}
 
--- ==================== AUTO BRIDGE TRAIL RACE ====================
-example:AddToggle("Auto Bridge Trail Race", function(state)
-    getfenv().autorace = state and true or false
+.option:hover {
+  border-color: #ff4500;
+  transform: translateX(4px);
+}
 
-    local plr = game:GetService("Players").LocalPlayer
-    local CarSerivce = require(plr.PlayerScripts.TS.CarService.CarService_Client).CarSerivce
-    local CarInfo = CarSerivce.ActiveCar
-    local CarState = CarInfo.CarState.State
-    local CarConfig = CarState.Config
-    local CarGears = CarConfig.Physics.Transmission.Gears
-    local GearValue = #CarGears
-    local maxSpeed = CarGears[GearValue][1]
+button {
+  background: #b92308;
+  color: white;
+  border: none;
+  border-radius: 7px;
+  padding: 8px 13px;
+  cursor: pointer;
+  transition: .2s;
+}
 
-    while getfenv().autorace do
-        task.wait()
-        if not workspace.RaceCheckpoints:FindFirstChildOfClass("Model") then
-            local ohString1 = "Bridge_Trail"
-            local ohBoolean2 = true
-            game:GetService("ReplicatedStorage")["events-shared/Definations/Networking/RaceDefinations@GeneralEvents"].EnterRaceQueue:FireServer(ohString1, ohBoolean2)
-            task.wait(1)
-        else
-            for i, v in pairs(workspace.RaceCheckpoints:GetChildren()) do
-                if v:IsA("Model") and v:FindFirstChild("Ring") and v.Ring.Transparency < 1 then
-                    local dist = (CarInfo.Body.Position - v.WorldPivot.Position).Magnitude
-                    local TweenService = game:GetService("TweenService")
-                    local TweenInfoToUse = TweenInfo.new(dist / maxSpeed, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut, 0, false, 0)
+button:hover {
+  background: #ff6500;
+  box-shadow: 0 0 12px #ff4500;
+}
 
-                    local TweenValue = Instance.new("CFrameValue")
-                    TweenValue.Value = CarInfo.Body.CFrame
+button.active {
+  background: #ff7900;
+}
 
-                    TweenValue.Changed:Connect(function()
-                        CarInfo.Body.CFrame = TweenValue.Value
-                        CarInfo.Body.AssemblyLinearVelocity = Vector3.zero
-                    end)
+.footer {
+  text-align: center;
+  color: #999;
+  font-size: 10px;
+  padding: 12px;
+}
 
-                    getfenv().tween = TweenService:Create(TweenValue, TweenInfoToUse, {Value = v.WorldPivot})
-                    getfenv().tween:Play()
-                    getfenv().tween.Completed:Wait()
-                end
-            end
-        end
-    end
-end)
+.close {
+  float: right;
+  background: #171717;
+  padding: 5px 10px;
+}
+</style>
+</head>
 
--- ==================== FLY VEHICLE ====================
-getfenv().flyVehicle = false
+<body>
 
-example:AddToggle("Fly Vehicle", function(state)
-    getfenv().flyVehicle = state
+<div class="hub" id="hub">
 
-    if state then
-        warn("Fly Vehicle ativado")
-    else
-        warn("Fly Vehicle desativado")
-    end
-end)
+  <div class="header">
+    <button class="close" onclick="closeHub()">✕</button>
+    <h1>🎃 PUMPKIN HUB</h1>
+    <p>HALLOWEEN EDITION</p>
+  </div>
+
+  <div class="content">
+    <div class="section">🔥 PRINCIPAL</div>
+
+    <div class="option">
+      <span>🚀 Fly</span>
+      <button onclick="toggle(this)">OFF</button>
+    </div>
+
+    <div class="option">
+      <span>⚡ Speed</span>
+      <button onclick="toggle(this)">OFF</button>
+    </div>
+
+    <div class="option">
+      <span>👻 Noclip</span>
+      <button onclick="toggle(this)">OFF</button>
+    </div>
+
+    <div class="option">
+      <span>👁️ ESP</span>
+      <button onclick="toggle(this)">OFF</button>
+    </div>
+
+    <div class="section">🎃 CONFIGURAÇÕES</div>
+
+    <div class="option">
+      <span>✨ Halloween FX</span>
+      <button onclick="toggle(this)">OFF</button>
+    </div>
+
+    <div class="option">
+      <span>🌙 Dark Mode</span>
+      <button onclick="toggle(this)">OFF</button>
+    </div>
+  </div>
+
+  <div class="footer">
+    PUMPKIN HUB • HALLOWEEN 2026
+  </div>
+
+</div>
+
+<script>
+function toggle(btn) {
+  const enabled = btn.textContent === "OFF";
+  btn.textContent = enabled ? "ON" : "OFF";
+  btn.classList.toggle("active", enabled);
+}
+
+function closeHub() {
+  document.getElementById("hub").style.display = "none";
+}
+</script>
+
+</body>
+</html>
